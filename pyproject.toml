@@ -1,7 +1,16 @@
 [project]
 name = "cod-drumming-classification"
 version = "0.1.0"
-description = "Add your description here"
+description = "Cod drumming classification using Google Perch 2.0 bioacoustic embeddings"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "soundfile>=0.13.1",
+    "numpy>=2.0",
+    "scipy>=1.13",
+    "scikit-learn>=1.5",
+    "tensorflow-cpu~=2.20.0",
+    "matplotlib>=3.9",
+    "perch-hoplite @ git+https://github.com/google-research/perch-hoplite.git",
+    "pandas>=2.3.3",
+]

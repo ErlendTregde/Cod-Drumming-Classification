@@ -1,1 +1,6 @@
 .venv
+.docs
+CLAUDE.md
+/data/
+__pycache__
+/models/
