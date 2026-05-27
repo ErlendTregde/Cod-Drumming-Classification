@@ -35,7 +35,6 @@ data/annotated/
   test/   click/  vocal/  water/  silence/  other/  NA/
 ```
 
-The full dataset (~11 000 files, 48.9 GB) lives on `\\fil01\share\Naturlyder\CodPond2\RAW_Audio\annotated_files\annotated`. Use `scripts/download_sample.ps1` (Windows) to copy a small sample locally.
 
 ## Structure
 
