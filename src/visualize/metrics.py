@@ -3,12 +3,14 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.metrics import classification_report
+from torch import nn
 
 from src.data.config import MODEL_DIR
+from src.training.train import predict
 
 
 def plot_class_metrics(
-    clf,
+    model: nn.Module,
     X_val: np.ndarray,
     y_val: np.ndarray,
     X_test: np.ndarray,
@@ -18,10 +20,10 @@ def plot_class_metrics(
 ) -> None:
     """Grouped bar chart of per-class F1 score on val and test splits."""
     report_val = classification_report(
-        y_val, clf.predict(X_val), target_names=label_names, output_dict=True, zero_division=0
+        y_val, predict(model, X_val), target_names=label_names, output_dict=True, zero_division=0
     )
     report_test = classification_report(
-        y_test, clf.predict(X_test), target_names=label_names, output_dict=True, zero_division=0
+        y_test, predict(model, X_test), target_names=label_names, output_dict=True, zero_division=0
     )
 
     f1_val  = [report_val[cls]["f1-score"]  for cls in label_names]

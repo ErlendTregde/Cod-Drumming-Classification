@@ -13,4 +13,5 @@ dependencies = [
     "matplotlib>=3.9",
     "perch-hoplite @ git+https://github.com/google-research/perch-hoplite.git",
     "pandas>=2.3.3",
+    "torch>=2.2",
 ]

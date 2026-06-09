@@ -3,19 +3,21 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.metrics import classification_report, confusion_matrix
+from torch import nn
 
 from src.data.config import MODEL_DIR
+from src.training.train import predict
 
 
 def evaluate(
-    clf,
+    model: nn.Module,
     X: np.ndarray,
     y: np.ndarray,
     label_names: list[str],
     split_name: str = "test",
 ) -> None:
     """Print accuracy and per-class metrics, save confusion matrix PNG."""
-    y_pred = clf.predict(X)
+    y_pred = predict(model, X)
     accuracy = (y_pred == y).mean()
 
     print(f"\n=== {split_name.upper()} ===")

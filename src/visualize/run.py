@@ -66,8 +66,8 @@ def main():
         X_train, y_train = build_arrays(samples, embeddings, "train")
         X_val,   y_val   = build_arrays(samples, embeddings, "val")
         X_test,  y_test  = build_arrays(samples, embeddings, "test")
-        clf = train_classifier(X_train, y_train, args.classifier)
-        plot_class_metrics(clf, X_val, y_val, X_test, y_test, label_names())
+        model = train_classifier(X_train, y_train, X_val, y_val, args.classifier)
+        plot_class_metrics(model, X_val, y_val, X_test, y_test, label_names())
 
     print(f"\nAll figures saved to {MODEL_DIR}/")
 
