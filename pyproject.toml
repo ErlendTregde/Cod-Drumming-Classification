@@ -9,7 +9,7 @@ dependencies = [
     "numpy>=2.0",
     "scipy>=1.13",
     "scikit-learn>=1.5",
-    "tensorflow-cpu~=2.20.0",
+    "tensorflow[and-cuda]~=2.20.0",
     "matplotlib>=3.9",
     "perch-hoplite @ git+https://github.com/google-research/perch-hoplite.git",
     "pandas>=2.3.3",

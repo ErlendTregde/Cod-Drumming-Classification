@@ -1,3 +1,6 @@
+from pathlib import Path
+
+import torch
 from torch import nn
 
 from src.data.config import MLP_DROPOUT, MLP_HIDDEN
@@ -36,3 +39,21 @@ def build_classifier(name: str, in_dim: int, n_classes: int) -> nn.Module:
     if name == "mlp":
         return MLPHead(in_dim, MLP_HIDDEN, n_classes, MLP_DROPOUT)
     return LinearHead(in_dim, n_classes)
+
+
+def save_model(model: nn.Module, name: str, in_dim: int, n_classes: int, path: Path) -> None:
+    """Persist a trained classifier (weights + the args needed to rebuild it)."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    torch.save(
+        {"name": name, "in_dim": in_dim, "n_classes": n_classes, "state_dict": model.state_dict()},
+        path,
+    )
+
+
+def load_model(path: Path) -> nn.Module:
+    """Rebuild a classifier from a checkpoint and load its weights (eval mode)."""
+    ckpt = torch.load(path, map_location="cpu")
+    model = build_classifier(ckpt["name"], ckpt["in_dim"], ckpt["n_classes"])
+    model.load_state_dict(ckpt["state_dict"])
+    model.eval()
+    return model

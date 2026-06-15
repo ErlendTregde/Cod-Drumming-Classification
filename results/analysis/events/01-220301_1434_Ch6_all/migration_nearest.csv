@@ -1,0 +1,11 @@
+true,width_ms,pred,frac
+vocal,2.5,click,1.0
+vocal,5.0,click,1.0
+vocal,10.0,click,1.0
+vocal,25.0,water,0.375
+vocal,25.0,vocal,0.5666666666666667
+vocal,25.0,click,0.058333333333333334
+vocal,50.0,vocal,0.9916666666666667
+vocal,50.0,water,0.008333333333333333
+vocal,100.0,vocal,1.0
+vocal,200.0,vocal,1.0

@@ -3,7 +3,7 @@ from typing import Callable
 
 import numpy as np
 
-from src.data.config import CACHE_DIR, PERCH_MODEL_NAME
+from src.data.config import CACHE_DIR, DETECTION_CACHE_DIR, INFERENCE_CACHE_DIR, PERCH_MODEL_NAME
 from src.data.loader import AudioSample
 from src.data.preprocess import load_and_preprocess
 
@@ -55,6 +55,35 @@ def get_embedding(model, audio: np.ndarray) -> np.ndarray:
     outputs = model.embed(tf.constant(audio[np.newaxis], dtype=tf.float32))
     emb = np.array(outputs.embeddings)
     return emb.mean(axis=1).squeeze(0)
+
+
+def inference_cache_path(wav_path: Path, hop_samples: int) -> Path:
+    """Cache location for a long file's window embeddings (keyed by stem + hop)."""
+    return INFERENCE_CACHE_DIR / f"{wav_path.stem}_hop{hop_samples}.npy"
+
+
+def detection_cache_path(wav_path: Path) -> Path:
+    """Cache location for a long file's detected-event embeddings + times (.npz)."""
+    return DETECTION_CACHE_DIR / f"{wav_path.stem}.npz"
+
+
+def embed_arrays(model, windows: np.ndarray, batch_size: int = 32) -> np.ndarray:
+    """Embed a batch of pre-windowed (PERCH_WINDOW_SAMPLES,) clips.
+
+    Processes `windows` in batches (Perch accepts a (B, samples) tensor) and
+    mean-pools each over time frames exactly like the annotated training clips.
+    Returns a (n_windows, 1536) array.
+    """
+    import tensorflow as tf
+    n = len(windows)
+    out = np.empty((n, 1536), dtype=np.float32)
+    for i in range(0, n, batch_size):
+        if i % (batch_size * 10) == 0:
+            print(f"  embedding window {i}/{n}")
+        batch = windows[i : i + batch_size]
+        outputs = model.embed(tf.constant(batch, dtype=tf.float32))
+        out[i : i + len(batch)] = np.array(outputs.embeddings).mean(axis=1)
+    return out
 
 
 def extract_and_cache(

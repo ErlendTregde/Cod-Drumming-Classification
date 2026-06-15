@@ -1,0 +1,5 @@
+class,sound_duration_ms,n_pulses,pulse_strength,flatness,centroid_hz
+click,601.71,95.0,0.548,0.24,915.03
+other,1070.73,210.0,0.547,0.14,676.95
+silence,2945.7299999999996,631.5,0.657,0.195,926.055
+vocal,684.06,120.0,0.584,0.16,703.62

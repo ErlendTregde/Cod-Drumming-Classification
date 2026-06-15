@@ -2,8 +2,9 @@ import argparse
 import subprocess
 import sys
 
-from src.data.config import CACHE_DIR, CLASSES, DATA_DIR
+from src.data.config import CACHE_DIR, CLASSES, DATA_DIR, MODEL_DIR
 from src.data.loader import load_dataset
+from src.model.classifier import save_model
 from src.model.perch import load_cached_embeddings, missing_embeddings
 from src.training.evaluate import evaluate
 from src.training.train import build_arrays, label_names, train_classifier
@@ -49,6 +50,10 @@ def main():
 
     print(f"\nTraining {args.classifier} classifier...")
     model = train_classifier(X_train, y_train, X_val, y_val, args.classifier)
+
+    model_path = MODEL_DIR / f"classifier_{args.classifier}.pt"
+    save_model(model, args.classifier, X_train.shape[1], len(CLASSES), model_path)
+    print(f"Saved trained model → {model_path}")
 
     evaluate(model, X_val,  y_val,  label_names(), "val")
     evaluate(model, X_test, y_test, label_names(), "test")

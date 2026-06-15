@@ -120,6 +120,13 @@ def predict(model: nn.Module, X: np.ndarray) -> np.ndarray:
     return model(_tensor(X)).argmax(1).cpu().numpy()
 
 
+@torch.no_grad()
+def predict_proba(model: nn.Module, X: np.ndarray) -> np.ndarray:
+    """Softmax class probabilities for X. Returns a (N, n_classes) numpy array."""
+    model.eval()
+    return model(_tensor(X)).softmax(1).cpu().numpy()
+
+
 def _save_training_curve(history: dict[str, list[float]], out_path: Path, classifier: str) -> None:
     """Two-panel figure: loss (train+val) and val accuracy vs epoch."""
     epochs = range(1, len(history["train_loss"]) + 1)
