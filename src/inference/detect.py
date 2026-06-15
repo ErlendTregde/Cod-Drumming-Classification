@@ -110,7 +110,8 @@ def plot_timeline(rows, labels, wav_name, path):
 def main():
     parser = argparse.ArgumentParser(description="Detect + classify events in a long recording")
     parser.add_argument("wav", type=Path, help="Path to the long WAV file")
-    parser.add_argument("--classifier", choices=["logistic", "mlp"], default="logistic")
+    parser.add_argument("--classifier", choices=["logistic", "mlp", "domain"], default="logistic",
+                        help="head to use: logistic/mlp (clean-clip) or domain (detector-crop, best)")
     parser.add_argument("--force-recompute", action="store_true",
                         help="Re-detect + re-embed even if cached")
     args = parser.parse_args()

@@ -33,38 +33,27 @@ are fast.
 
 ### Detecting events in long recordings
 
-To find and classify cod sounds in a long (5–45 min) recording, use `src/inference/detect.py`:
+To find and classify cod sounds in a long (5–45 min) **unannotated** recording, use
+`src/inference/detect.py`. An energy/onset detector finds the short events (a click is ~a few ms,
+a vocal ~50 ms), then each is cut, zero-padded to 5s like the training clips, embedded with Perch,
+and classified:
 
 ```bash
-uv run python -m src.inference.detect data/unannotated/01-220213_1505_Ch4_all.wav   # uses models/classifier_logistic.pt
-uv run python -m src.inference.detect <wav> --classifier mlp                        # use the MLP model
+uv run python -m src.inference.detect <wav>                      # clean-clip head (baseline)
+uv run python -m src.inference.detect <wav> --classifier domain  # domain-adapted head (recommended)
 ```
 
-The annotated events are only milliseconds long (a click is ~a few ms; a vocal ~50 ms), so
-`src/inference/detect.py` first runs an energy/onset detector over the raw waveform to find the
-short candidate events, then cuts each one, zero-pads it to 5s exactly like the training clips,
-and classifies it with Perch + the trained model. This matches the conditions the classifier was
-trained under. Detector settings (band-pass, threshold, min duration) live in
+> Blind 5-second tiling does **not** work here — Perch mean-pools over its 5s window, so a
+> millisecond event is averaged away (`src/inference/infer.py` is kept only to demonstrate this).
+> The detector-first approach matches the conditions the classifier was trained under.
+
+Outputs → `results/detection/<filename>/`: `events.csv` (one row per event:
+`start_s, end_s, duration_s, class, confidence`) and `timeline.png`. Score a run against a Raven
+selection table with `src/inference/evaluate_detection.py`. Detector settings live in
 `src/data/config.py`.
 
-Outputs are written to `results/detection/<filename>/`:
-- `events.csv` — one row per detected event (`start_s, end_s, duration_s, class, confidence`)
-- `timeline.png` — detected events over time, colored by confidence
-
-Run `main.py` first so a trained model exists.
-
-#### Diagnostic: blind sliding window (`src/inference/infer.py`)
-
-`src/inference/infer.py` tiles the file into fixed 5s windows and classifies every window.
-**This does not work for this data** — Perch mean-pools over each 5s window, so a
-millisecond-long event is averaged away and the model only ever sees background (it returns
-`silence`/`other` for the whole file, even on clips the trained model scores 95% F1 on in
-isolation). It is kept only for comparison; use `src/inference/detect.py` for real results.
-
-```bash
-uv run python -m src.inference.infer <wav>             # blind 5s tiling — diagnostic only
-uv run python -m src.inference.infer <wav> --hop 80000 # 2.5s overlap
-```
+Run `main.py` first so the baseline model exists; the domain-adapted head is produced by the
+analysis pipeline in `src/data/analysis/` (see the report linked under **Results**).
 
 ## Data
 
@@ -84,6 +73,7 @@ data/annotated/
 main.py                        — train + evaluate on annotated clips
 src/
   data/                        — config, dataset loader, audio preprocessing (load_windows, detect_events)
+  data/analysis/               — class-separability analysis + domain-adaptation training/eval
   model/perch.py               — Perch embedding extraction + cache (TensorFlow)
   model/classifier.py          — PyTorch model architectures + save/load (LinearHead, MLPHead)
   model/extract.py             — subprocess: embed the annotated dataset (TF-only)
@@ -102,13 +92,20 @@ data/                          — local data files (not tracked in git)
 
 ## Results
 
-See [`results/`](results/) for confusion matrices, per-class metrics, and t-SNE plots.
+**Annotated clips** (Perch embedding + linear/MLP head) — test accuracy ~**86%**, all classes
+incl. click/vocal cleanly separated:
 
-| Experiment | Val accuracy | Test accuracy |
+| Experiment | Val acc | Test acc |
 |---|---|---|
-| Perch v2 + Logistic Regression (n=20/class) | 80% | 81% |
-| Perch v2 + MLP (n=20/class) | 84% | 80% |
 | Perch v2 + Logistic Regression (n=500/class) | 70% | 86% |
 | Perch v2 + MLP (n=500/class) | 70% | 84% |
 
-The val/test gap at n=500 reflects domain shift between splits (likely different recording sessions). Test accuracy is the more reliable indicator. Full per-class metrics and confusion matrices are in [`results/`](results/).
+**Long unannotated files** (detect → classify → score vs Raven tables, held-out recordings):
+
+- **Detection** finds 86–99% of annotated events (but over-detects 5–35× — it casts a wide net).
+- The **domain-adapted** head (retrained on detector-cropped events, not the clean clips) reaches
+  **66% correct on a held-out 10-file set** (vocals **88%**), up from 48% with the clean-clip head.
+- An optional **`background` class** rejects ~94% of detections, cutting over-detection 52.8×→2.9×.
+
+Full methodology, per-file numbers, and figures: **[`results/detection/REPORT.md`](results/detection/REPORT.md)**.
+Confusion matrices, t-SNE, and class-separability plots are under [`results/`](results/).
