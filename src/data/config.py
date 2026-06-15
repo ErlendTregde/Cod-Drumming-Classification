@@ -34,6 +34,18 @@ DETECT_SCALES_MS = (10.0, 50.0, 200.0)
 
 CLASSES = ["click", "other", "silence", "vocal", "water"]  # NA excluded
 
+# Domain adaptation — train the head on detector-cropped events from long `_all`
+# files (+ their selection tables) instead of the biologists' clean clips. Mirrors
+# the annotated-clip pipeline: extract (src/model/extract_domain.py) → train
+# (train_domain.py). The held-out recordings are excluded from training.
+DOMAIN_TRAIN_DIR = Path("data/unannotated/train")   # _all files + selection_*.txt to train on
+DOMAIN_VAL_DIR = Path("data/unannotated/val")        # held-out _all files to evaluate on
+DOMAIN_DATASET = Path("data/domain_train.npz")       # cached detector-crop embeddings + labels
+DOMAIN_BG_PER_FILE = 50                               # background crops sampled per file (reject class)
+DOMAIN_HELDOUT_RECS = (                               # never train on these (they are evaluation files)
+    "01-220224_1200_Ch4", "01-220301_1434_Ch6", "01-220412_1221_Ch6",
+)
+
 # Classifier training (PyTorch)
 TORCH_SEED = 42
 BATCH_SIZE = 64

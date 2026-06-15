@@ -50,16 +50,20 @@ def train_classifier(
     X_val: np.ndarray,
     y_val: np.ndarray,
     classifier: str = "logistic",
+    n_classes: int = len(CLASSES),
 ) -> nn.Module:
     """Train a PyTorch classifier on embedding features.
 
     Standard training loop: Adam + cross-entropy over mini-batches, with per-epoch
     logging and early stopping on validation loss (best weights restored). Saves a
     training-curve figure to MODEL_DIR/training_curve.png and returns the trained model.
+
+    `n_classes` is the output dimension — defaults to the 5 annotated CLASSES, but the
+    domain pipeline passes 6 when it adds a `background` reject class.
     """
     torch.manual_seed(TORCH_SEED)
 
-    model = build_classifier(classifier, X_train.shape[1], len(CLASSES)).to(DEVICE)
+    model = build_classifier(classifier, X_train.shape[1], n_classes).to(DEVICE)
 
     Xtr, ytr = _tensor(X_train), _tensor(y_train, torch.long)
     Xva, yva = _tensor(X_val), _tensor(y_val, torch.long)

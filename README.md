@@ -52,8 +52,23 @@ Outputs → `results/detection/<filename>/`: `events.csv` (one row per event:
 selection table with `src/inference/evaluate_detection.py`. Detector settings live in
 `src/data/config.py`.
 
-Run `main.py` first so the baseline model exists; the domain-adapted head is produced by the
-analysis pipeline in `src/data/analysis/` (see the report linked under **Results**).
+Run `main.py` first for the baseline head; the recommended **domain-adapted** head is produced by
+`src/training/train_domain.py` (see below).
+
+### Training on long files (domain adaptation)
+
+The clip-trained head underperforms on long recordings (a train/serve mismatch — it was trained on
+clean clips but sees detector crops). `src/training/train_domain.py` retrains the head on events the *detector*
+cut from the long `_all` files in `data/unannotated/train/` (labelled from their `selection_*.txt`
+tables) — mirroring `main.py`'s pipeline (extract → train → evaluate):
+
+```bash
+uv run python -m src.training.train_domain               # → models/classifier_domain.pt  (use with detect.py --classifier domain)
+uv run python -m src.training.train_domain --background  # + a reject class → models/classifier_domain_bg.pt
+```
+
+It evaluates on the held-out recordings in `data/unannotated/val/` and prints domain vs baseline.
+Numbers and methodology are in [`results/detection/REPORT.md`](results/detection/REPORT.md).
 
 ## Data
 
@@ -70,19 +85,22 @@ data/annotated/
 ## Structure
 
 ```
-main.py                        — train + evaluate on annotated clips
+main.py                        — train + evaluate the clean-clip head on annotated clips
 src/
   data/                        — config, dataset loader, audio preprocessing (load_windows, detect_events)
-  data/analysis/               — class-separability analysis + domain-adaptation training/eval
+  data/analysis/               — class-separability analysis + signal-feature experiments
   model/perch.py               — Perch embedding extraction + cache (TensorFlow)
   model/classifier.py          — PyTorch model architectures + save/load (LinearHead, MLPHead)
-  model/extract.py             — subprocess: embed the annotated dataset (TF-only)
+  model/extract.py             — subprocess: embed the annotated clips (TF-only)
+  model/extract_domain.py      — subprocess: detect + label + embed long-file crops (TF-only)
   model/embed_long.py          — subprocess: embed a long file with a sliding window (TF-only)
   model/detect_long.py         — subprocess: detect events in a long file + embed each (TF-only)
   inference/detect.py          — detect + classify events in a long recording (recommended)
   inference/evaluate_detection.py — score detect.py against Raven selection tables
   inference/infer.py           — blind 5s sliding window over a long file (diagnostic only)
-  training/                    — training loop (train.py) and evaluation (evaluate.py)
+  training/train.py            — clip training loop (reused by both heads)
+  training/train_domain.py     — entry point: train the domain head on detector crops
+  training/evaluate.py         — clip metrics + evaluate_long_files (held-out long-file scoring)
   visualize/                   — waveforms, spectrograms, t-SNE, metrics plots
 notebooks/                     — Jupyter notebooks for exploration
 results/                       — saved experiment outputs (metrics, figures, detection timelines)

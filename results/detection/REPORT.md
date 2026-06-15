@@ -214,12 +214,12 @@ width or feature problem.
 
 If the bottleneck is the clean-clip↔detector-crop mismatch, the fix is to **train on detector
 crops**. We transferred **91 additional `_all` recordings + their selection tables** and built a
-training set from them (`build_domain_dataset.py`): run the detector on each, **greedy-match each
+training set from them (`src/model/extract_domain.py`): run the detector on each, **greedy-match each
 detection to a table annotation** (so each crop gets an exact label *and* the detector's boundary),
 embed the matched crops, and pool — **3,542 labelled detector-crops** across 90 recordings (vocal
 1589, click 724, silence 708, other 452, water 69). The three evaluation files were **excluded**
 from training. We then trained the same logistic head on these crops and re-scored the three
-held-out files (`train_domain.py`):
+held-out files (`src/training/train_domain.py`):
 
 | held-out file | clean-clip baseline | **domain-adapted** | gain |
 |---|---|---|---|
@@ -237,7 +237,7 @@ same-datetime sibling** in training (fully clean). `220301`'s same-datetime *Ch4
 different hydrophone of the same events) is in training, so its +14 pp is mildly optimistic — but
 the two fully-clean files (+40, +13) establish the effect independently.
 
-**Confirmed on a fresh validation set** (`eval_val.py`, 10 recordings in `data/unannotated/val/`,
+**Confirmed on a fresh validation set** (`src/training/train_domain.py`'s held-out eval, 10 recordings in `data/unannotated/val/`,
 **914 events, none in training**, no recording overlap or same-datetime sibling leak):
 
 | metric (val, 914 events) | clean-clip | **domain-adapted** |
@@ -264,7 +264,7 @@ remains a separate detector-threshold problem. (2) **Water stays weak** (69 trai
 Domain adaptation fixed *classification* but not *over-detection* (5–35× too many events). To attack
 that, we added a 6th class — **`background`**, sampled from detector events that overlap **no** table
 annotation (the false positives, 50/file ≈ 4,488 crops) — so the model can *reject* a detection
-instead of forcing it into a cod-sound class (`build_domain_dataset.py` + `train_domain_bg.py`).
+instead of forcing it into a cod-sound class (`python -m src.training.train_domain --background`).
 Evaluated on the same 10 val files (914 events):
 
 | model | correct-classification | detections kept | over-detection |
@@ -360,13 +360,13 @@ precision-for-recall.
 
 ```bash
 uv run main.py                                                  # train + evaluate the clip classifier
-uv run python -m src.inference.detect data/unannotated/<file>_all.wav        # detect + classify a long file
+uv run python -m src.training.train_domain                      # train the domain head on detector crops + eval on val
+uv run python -m src.training.train_domain --background         # + the background/reject class
+uv run python -m src.inference.detect data/unannotated/<file>_all.wav --classifier domain  # detect + classify a long file
 uv run python -m src.inference.evaluate_detection data/unannotated/<file>_all.wav  # honest score vs selection table
 uv run python -m src.data.analysis.run                         # class-separability analysis (H1–H5)
-uv run python -m src.data.analysis.augment_experiment          # signal-feature augmentation (clips)
+uv run python -m src.data.analysis.augment_experiment          # signal-feature augmentation experiment (clips)
 uv run python -m src.data.analysis.longfile_feature_test       # augmentation on long-file events
-uv run python -m src.data.analysis.build_domain_dataset        # build detector-crop training set (TF)
-uv run python -m src.data.analysis.train_domain                # train + held-out domain-adaptation eval
 ```
 
 ## 9. Figure / artifact index
