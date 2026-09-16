@@ -14,4 +14,13 @@ dependencies = [
     "perch-hoplite @ git+https://github.com/google-research/perch-hoplite.git",
     "pandas>=2.3.3",
     "torch>=2.2",
+    "tmu",
 ]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
+
+[tool.uv.sources]
+tmu = { git = "https://github.com/cair/tmu.git" }

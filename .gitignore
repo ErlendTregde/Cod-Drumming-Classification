@@ -1,6 +1,9 @@
 .venv
 .docs
+docs
 CLAUDE.md
 /data/
 __pycache__
 /models/
+src/advanced_ict
+skills
